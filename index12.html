@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centros de Masa y Centroides</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #000000; 
+            color: #008b56; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+        }
+        .calculator { 
+            border: 1px solid #ccc; 
+            padding: 20px; 
+            border-radius: 10px; 
+            width: 100%; 
+            max-width: 500px; 
+            background: #fff; 
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        .calculator input, .calculator button { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 5px; 
+            border: 1px solid #ccc; 
+            font-size: 1em; 
+        }
+        .calculator button {
+            background-color: #008f53;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .calculator button:hover {
+            background-color: #00ac5c;
+        }
+        .result { 
+            font-weight: bold; 
+            color: #00964b; 
+            margin-top: 10px; 
+            padding: 10px;
+            background-color: #f8fafc;
+            border-radius: 5px;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .formula {
+            background-color: #f8fafc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-style: italic;
+        }
+        .details {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8fafc;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Centros de Masa y Centroides</h1>
+    <div class="calculator">
+        <div class="formula">
+            Fórmulas:<br>
+            M = ∫[a→b] ρ(x) dx<br>
+            x̄ = (1/M) ∫[a→b] x ρ(x) dx
+        </div>
+        <label for="density-function">Función de densidad ρ(x):</label>
+        <input type="text" id="density-function" placeholder="Ej. x^2" value="x^2">
+        <label for="limit-a">Límite inferior (a):</label>
+        <input type="number" id="limit-a" value="0" step="0.1">
+        <label for="limit-b">Límite superior (b):</label>
+        <input type="number" id="limit-b" value="1" step="0.1">
+        <button onclick="calculateCentroid()">Calcular Centro de Masa</button>
+        <div class="result" id="result-output"></div>
+        <div class="details" id="calculation-details"></div>
+    </div>
+
+    <script>
+        function numericalIntegration(func, a, b, n = 1000) {
+            const h = (b - a) / n;
+            let sum = 0.5 * (func(a) + func(b));
+            
+            for (let i = 1; i < n; i++) {
+                const x = a + i * h;
+                sum += func(x);
+            }
+            
+            return h * sum;
+        }
+
+        function calculateCentroid() {
+            const densityInput = document.getElementById("density-function").value;
+            const a = parseFloat(document.getElementById("limit-a").value);
+            const b = parseFloat(document.getElementById("limit-b").value);
+
+            try {
+                // Crear una función evaluable de mathjs
+                const density = math.parse(densityInput);
+                
+                // Función para la masa total
+                const massFunc = (x) => {
+                    return density.evaluate({x: x});
+                };
+
+                // Función para el momento
+                const momentFunc = (x) => {
+                    return x * density.evaluate({x: x});
+                };
+                
+                // Calcular la masa total
+                const mass = numericalIntegration(massFunc, a, b);
+                
+                // Calcular el centroide
+                const moment = numericalIntegration(momentFunc, a, b);
+                const centroidX = moment / mass;
+                
+                // Mostrar resultados redondeados a 4 decimales
+                document.getElementById("result-output").innerHTML = 
+                    `Resultados:<br>
+                     Masa total (M) = ${math.round(mass, 4)}<br>
+                     Centro de masa (x̄) = ${math.round(centroidX, 4)}`;
+
+                // Mostrar detalles del cálculo
+                document.getElementById("calculation-details").innerHTML = 
+                    `Detalles del cálculo:<br>
+                     • Integral de la densidad = ${math.round(mass, 4)}<br>
+                     • Integral del momento = ${math.round(moment, 4)}<br>
+                     • Centro de masa = momento/masa = ${math.round(moment, 4)}/${math.round(mass, 4)}`;
+
+            } catch (error) {
+                document.getElementById("result-output").innerHTML = 
+                    `<span class="error">Error: ${error.message}. Verifica la sintaxis de la función.</span>`;
+                document.getElementById("calculation-details").innerHTML = "";
+            }
+        }
+
+        // Calcular inicialmente con los valores por defecto
+        calculateCentroid();
+    </script>
+</body>
+</html>
